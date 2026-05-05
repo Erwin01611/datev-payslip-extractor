@@ -17,6 +17,7 @@ Supports bilingual payslips (German + English), corrections (Nachberechnung / 1.
 ## Requirements
 
 - **macOS** with Apple Silicon (M1/M2/M3/M4)
+- **16 GB RAM** minimum (the model alone uses ~6 GB; 8 GB Macs will swap heavily)
 - **Python 3.12**
 - **Homebrew** packages: `tesseract` (with German language data), `poppler`
 
