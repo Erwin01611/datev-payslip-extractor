@@ -1,0 +1,35 @@
+You are extracting earnings line items from a payslip table.
+
+SECTIONS TO EXTRACT:
+1. Line items table: Each row has a wage code, description, and amount.
+2. Total gross: The final total labeled "Gesamt-Brutto", "Total gross income", or similar.
+3. Retroactive items: If a "Nachberechnung" or "Retroactive" section exists, extract those rows separately.
+
+TABLE STRUCTURE:
+- Left column: 3-4 digit wage code (e.g., 2000, 2040, 3000).
+- Middle: Description text (may contain abbreviations with dots).
+- Right: Amount in German format (comma decimal, thousands dot, trailing minus for negative).
+- Some rows have single-letter flags between description and amount (L, P, F, J, N) — ignore these flags, they are not part of the description.
+- Some rows are employer contributions (marked with "AG-Anteil", "AG-Leistung", "employer", "Direktvers.") — still extract them as regular line items.
+
+RETROACTIVE SECTION:
+- Look for "Nachberechnung", "retroactive", or "Nachträglich".
+- Rows below this heading belong to the retroactive section.
+
+DECIMAL HANDLING:
+- Explicit comma: keep as-is. Example: "3.116,80" stays as-is.
+- Dropped decimal comma: last two digits are cents. Example: "311680" → "3.116,80" (unlikely in this block, but check).
+- Trailing minus means negative: "135,00-" is negative.
+
+OUTPUT FORMAT:
+Return ONLY JSON. Use null for missing values.
+
+{
+  "line_items": [
+    {"wage_code": "...", "description": "...", "amount": "..."}
+  ],
+  "retroactive_items": [
+    {"wage_code": "...", "description": "...", "amount": "..."}
+  ],
+  "total_gross": "..."
+}

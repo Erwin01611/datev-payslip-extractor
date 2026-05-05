@@ -1,0 +1,47 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environment
+.venv/
+venv/
+env/
+ENV/
+
+# Environment variables
+.env
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Input / output / temp directories (created at runtime)
+inputs/
+outputs/
+crops/
+logs/
+
+# Test artifacts
+*.log
+*.png
+*.jpg
+*.jpeg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter
+.ipynb_checkpoints/
+
+# py2app build artifacts
+build/
+dist/
+*.egg-info/
+.venv_old/

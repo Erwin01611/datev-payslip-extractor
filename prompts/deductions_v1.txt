@@ -1,0 +1,110 @@
+Extract deduction amounts from this DATEV payslip crop.
+
+Return ONLY raw valid JSON. No markdown. No code fence.
+All values must be strings in German money format like "12,34", or null.
+Never return numeric JSON values.
+
+The image has two sections: Steuer at the top and Sozialversicherung at the bottom.
+
+TOP STEUER SECTION:
+Ignore Steuer-Brutto.
+Lohnsteuer -> lohnsteuer.
+Kirchensteuer -> kirchensteuer.
+Solidaritätszuschlag -> solidaritaetszuschlag.
+Far-right Steuerrechtliche Abzüge total -> steuerrechtliche_abzuege.
+
+BOTTOM SOZIALVERSICHERUNG SECTION:
+This section has 8 internal columns in this exact order:
+1 KV-Brutto -> ignore
+2 RV-Brutto -> ignore
+3 AV-Brutto -> ignore
+4 PV-Brutto -> ignore
+5 KV-Beitrag(HI Contribution) -> kv_beitrag
+6 RV-Beitrag(PI Contribution) -> rv_beitrag
+7 AV-Beitrag(UI Contribution) -> av_beitrag
+8 PV-Beitrag(CI Contribution) -> pv_beitrag
+
+Critical:
+The first four columns are Brutto base columns, not deductions.
+Only extract values below columns 5 to 8: KV-Beitrag, RV-Beitrag, AV-Beitrag, PV-Beitrag.
+Do not assign values from Brutto columns to Beitrag fields.
+
+Column anchoring rule:
+Find the vertical separator lines and column headers.
+Assign each amount to the header directly above it.
+Do not shift values into neighboring columns.
+Do not assign the first visible Beitrag value to KV-Beitrag automatically.
+If a Beitrag column is blank, return null for that field.
+
+Special DATEV footnote rule:
+In the Beitrag row, a tiny single digit immediately after an amount is a footnote for that amount.
+A standalone single digit is never a valid contribution amount.
+Do not move a tiny footnote digit from AV-Beitrag into PV-Beitrag.
+However, if PV-Beitrag contains two or more connected digits, it is a real amount and must be extracted.
+PV-Beitrag is null only when the only visible content below PV-Beitrag is exactly one isolated digit.
+
+Digit rule:
+Read exactly the digits visible in each amount.
+Do not append zeros.
+Do not add missing digits.
+Do not copy digits from examples or neighboring columns.
+If the visible raw digits are 4 digits, format them as two digits before the comma and two after the comma.
+If the visible raw digits are 5 digits, format them as three digits before the comma and two after the comma.
+If the visible raw digits are 6 digits, format them as one thousands digit, then three digits, comma, two cents.
+
+Amount formatting:
+If no comma is visible, insert the comma before the last two visible digits.
+Examples:
+1234 -> "12,34"
+12345 -> "123,45"
+123456 -> "1.234,56"
+Do not change the digit sequence.
+
+Negative amount rule:
+If the visible amount ends with "-", keep the trailing minus sign.
+Examples:
+1234- -> "12,34-"
+12345- -> "123,45-"
+191-1 -> "1,91-"
+The final digit or symbol after a trailing minus can be a footnote and must be ignored.
+
+Valid amount rule:
+A valid amount must contain at least 2 digits.
+A single isolated digit such as 1, 2, 3, 4, 5, 6, 7, 8, or 9 is never a deduction amount.
+Two or more connected digits are a valid amount candidate.
+
+Footnote rule:
+A small isolated digit, letter, or symbol after an amount is a footnote.
+The footnote belongs to the amount before it.
+Never extract a standalone footnote as a separate contribution.
+Examples:
+1234 1 -> "12,34"
+12,34 Z -> "12,34"
+0,65-Z -> "0,65-"
+191-1 -> "1,91-"
+
+Rows:
+Use L for the visible current row.
+Use N for the second separate amount row if an N row is visible.
+If both L and N are visible, extract both rows separately.
+Do not mix L values into N or N values into L.
+
+Final validation before JSON:
+No field may contain a single digit alone.
+Any standalone single digit must be replaced with null.
+Do not invent digits or trailing zeros.
+Do not replace two-or-more-digit amounts with null.
+Preserve trailing minus signs for negative values.
+
+Return exactly this JSON object:
+{
+  "lohnsteuer": {"L": null, "N": null},
+  "kirchensteuer": {"L": null, "N": null},
+  "solidaritaetszuschlag": {"L": null, "N": null},
+  "steuerrechtliche_abzuege": {"L": null, "N": null},
+  "kv_beitrag": {"L": null, "N": null},
+  "rv_beitrag": {"L": null, "N": null},
+  "av_beitrag": {"L": null, "N": null},
+  "pv_beitrag": {"L": null, "N": null},
+  "sv_rechtliche_abzuege": {"L": null, "N": null}
+}

@@ -1,0 +1,42 @@
+You are extracting bank and payout information from a payslip.
+
+SECTIONS TO EXTRACT:
+1. Bank details: Bank name and account number (IBAN). May be absent in English payslips.
+2. Employer cost summary — look for these columns:
+   German: "SV-AG-Anteil" | English: "Emp.soc.sec.contr."
+   German: "Zus. AG-Kosten" | English: "Empl. cost, add."
+   German: "Gesamtkosten" | English: "Total cost"
+3. Payout amount:
+   German: "Auszahlungsbetrag" | English: "Net pay"
+
+UNIVERSAL DECIMAL RULE:
+Every monetary amount has exactly 2 digits after the decimal comma (cents).
+The format is always: whole_number, cents
+- "35,13" = 35 euros and 13 cents
+- "667,49" = 667 euros and 49 cents
+- "4.085,95" = 4085 euros and 95 cents (dot = thousands separator)
+
+If a number has NO comma, the decimal comma is dropped. The last 2 digits are the cents:
+- "3513" → "35,13"
+- "66749" → "667,49"
+- "408595" → "4.085,95" (thousands dot stays, comma goes before last 2 digits)
+
+HYPOTHETICAL EXAMPLE (fake data):
+- Raw: "12345" → "123,45"
+- Raw: "123456" → "1.234,56"
+
+RULES:
+- Preserve spaces in the IBAN.
+- Ignore footnotes, superscripts, and legend text below the table.
+
+OUTPUT FORMAT:
+Return ONLY JSON. Use null for missing values.
+
+{
+  "bank_name": "...",
+  "iban": "...",
+  "sv_ag_anteil": "...",
+  "zus_ag_kosten": "...",
+  "gesamtkosten": "...",
+  "auszahlungsbetrag": "..."
+}

@@ -1,0 +1,36 @@
+You are extracting the header section of a payslip.
+
+SECTIONS TO EXTRACT:
+1. Employee name and number:
+   German: look for "Personal-Nr." or "Pers.-Nr." nearby the name
+   English: look for "Pers. no." nearby the name
+2. Payroll period:
+   German: "Abrechnung der Brutto/Netto-Bezüge für [Monat] [Jahr]"
+   English: "Pay Advice for [Month] [Year]"
+   Correction number if present: "1.C", "2.C" (English) or "1.NB", "2.NB" (German).
+
+HYPOTHETICAL EXAMPLES (fake data, do NOT use these values):
+- Employee: "Max Mustermann", Pers.-Nr.: "01234"
+- Month: "August", Year: "2025"
+- Correction: "1.C"
+
+RULES:
+- Extract the name exactly as shown, preserving German characters (ä, ö, ü, ß).
+- Return month as the English month name (e.g., "August" or "January").
+- Return year as 4 digits (e.g., "2025").
+- Use null for missing values.
+
+OUTPUT FORMAT:
+Return ONLY JSON. Use null for missing values.
+
+{
+  "employee": {
+    "name": "...",
+    "employee_number": "..."
+  },
+  "payroll_period": {
+    "month": "...",
+    "year": "...",
+    "correction_number": "..."
+  }
+}

@@ -1,0 +1,28 @@
+# Core vision pipeline
+mlx-vlm==0.4.4
+transformers>=5.1.0
+torch==2.11.0
+torchvision==0.26.0
+
+# PDF processing
+pdf2image==1.17.0
+pdfplumber==0.11.9
+pytesseract==0.3.13
+Pillow==12.2.0
+
+# Data validation
+pydantic==2.12.5
+pydantic-settings==2.13.1
+
+# Configuration
+python-dotenv==1.2.2
+
+# Desktop GUI (optional — only for Tkinter app)
+# Tkinter is built into Python, no pip install needed
+
+# Web UI (optional — only if using Streamlit)
+streamlit==1.57.0
+
+# HTTP client (used by some dependencies)
+requests==2.33.1
+rich==14.3.3

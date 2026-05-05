@@ -1,0 +1,53 @@
+You are extracting data from a specific table on a payslip.
+
+FIND THE TABLE:
+Locate the section labeled "Netto-Bezüge/Netto-Abzüge" or "Non-taxable/non-contributory payments and deductions". 
+This section has a header row with column labels like:
+- "Nr." or "Lohnart" (left column)
+- "Bezeichnung" (middle column)  
+- "Betrag" (right column)
+
+The table is on the RIGHT side of the page, separated from "Verdienstbescheinigung" / "Statement of earnings" on the left.
+
+EXTRACT TWO THINGS:
+1. "Netto-Verdienst" or "Net income" — the amount at the TOP RIGHT, above the table.
+2. ALL rows in the Netto-Bezüge/Netto-Abzüge table that appear BELOW the header row.
+
+TABLE ROW RULES:
+- ONLY extract rows that appear BELOW the "Nr./Lohnart | Bezeichnung | Betrag" header.
+- The leftmost column USUALLY contains a numeric wage code (e.g., 9840, 9850). BUT it can also be EMPTY.
+- If the leftmost column is empty, set wage_code to an empty string "".
+- If the leftmost column contains text like "aus NB 01/2023", that is NOT a wage code — set wage_code to "" and put the full text in description.
+- The middle column is the description.
+- The right column is the amount. Amounts use comma as decimal separator. Amounts ending with "-" are negative.
+- DO NOT extract rows from the left side. Labels like Gesamt-Brutto, Steuer-Brutto, Lohnsteuer, KV-Beitrag, RV-Beitrag, AV-Beitrag, PV-Beitrag are part of the left section, NOT this table.
+
+EXAMPLES:
+
+Row with numeric code:
+  9840  VWL                          40,00-
+→ {"wage_code": "9840", "description": "VWL", "amount": "40,00-"}
+
+Row with EMPTY code:
+        aus NB 01/2023              24,36
+→ {"wage_code": "", "description": "aus NB 01/2023", "amount": "24,36"}
+
+Multiple rows:
+  9850  AG-Ant.freiw.Krankenvers.    469,94
+  9851  Gesamtb.freiw.Krankenvers    939,89-
+→ [
+  {"wage_code": "9850", "description": "AG-Ant.freiw.Krankenvers.", "amount": "469,94"},
+  {"wage_code": "9851", "description": "Gesamtb.freiw.Krankenvers", "amount": "939,89-"}
+]
+
+Empty table (only headers, no rows below):
+→ {"net_income": "...", "net_adjustments": []}
+
+OUTPUT FORMAT — Return ONLY JSON:
+
+{
+  "net_income": "...",
+  "net_adjustments": [
+    {"wage_code": "...", "description": "...", "amount": "..."}
+  ]
+}
