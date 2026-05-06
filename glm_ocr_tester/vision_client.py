@@ -73,14 +73,28 @@ def ensure_model_downloaded(model: str = DEFAULT_MODEL, timeout: int = 3600) -> 
         text=True,
     )
 
-    # Heartbeat thread: logs every 60 sec so users know the app hasn't frozen
+    # Heartbeat thread: reports cache-folder growth every 2 min
     heartbeat_stop = threading.Event()
+    _TOTAL_GB = 6.0  # approximate size of Qwen3.5-9B-MLX-4bit
+
+    def _cache_size_gb(model_name: str) -> float:
+        cache_dir = Path.home() / ".cache" / "huggingface" / "hub"
+        model_cache = cache_dir / f"models--{model_name.replace('/', '--')}"
+        if not model_cache.exists():
+            return 0.0
+        total = sum(f.stat().st_size for f in model_cache.rglob("*") if f.is_file())
+        return total / (1024 ** 3)
 
     def _heartbeat() -> None:
         elapsed = 0
-        while not heartbeat_stop.wait(timeout=60):
-            elapsed += 1
-            logger.info("Download in progress... %d minute(s) elapsed. Please wait.", elapsed)
+        while not heartbeat_stop.wait(timeout=120):
+            elapsed += 2
+            downloaded = _cache_size_gb(model)
+            pct = min(int((downloaded / _TOTAL_GB) * 100), 99)
+            logger.info(
+                "Downloaded %.1f GB of ~%.0f GB (%d%%). %d minute(s) elapsed.",
+                downloaded, _TOTAL_GB, pct, elapsed,
+            )
 
     heartbeat = threading.Thread(target=_heartbeat, daemon=True)
     heartbeat.start()
