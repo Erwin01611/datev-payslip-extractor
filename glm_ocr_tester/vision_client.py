@@ -63,12 +63,55 @@ def ensure_model_downloaded(model: str = DEFAULT_MODEL, timeout: int = 3600) -> 
         "--image", str(dummy_image),
     ]
 
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
-    if result.returncode != 0:
-        err = result.stderr.strip() or "Unknown error"
+    import threading
+
+    process = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        bufsize=1,
+    )
+
+    stdout_lines: list[str] = []
+
+    def _read_stdout() -> None:
+        """Drain stdout in a background thread so we can enforce a timeout."""
+        try:
+            for line in process.stdout:
+                line = line.rstrip()
+                if not line:
+                    continue
+                # Strip ANSI escape codes (tqdm progress bars)
+                clean = re.sub(r"\x1b\[[0-9;]*m", "", line)
+                # tqdm uses \r to overwrite the same line; log each meaningful segment
+                segments = [s.strip() for s in clean.split("\r") if s.strip()]
+                for seg in segments:
+                    if len(seg) > 10:
+                        logger.info(seg)
+                stdout_lines.append(line)
+        except Exception:
+            pass
+
+    reader = threading.Thread(target=_read_stdout, daemon=True)
+    reader.start()
+    reader.join(timeout=timeout)
+
+    if reader.is_alive():
+        logger.warning("Model download timed out after %ds", timeout)
+        process.kill()
+        process.wait()
+        reader.join(timeout=5)
+        raise RuntimeError(f"Model download timed out after {timeout}s")
+
+    process.wait()
+    reader.join(timeout=5)  # drain any trailing output
+
+    if process.returncode != 0:
+        err = "\n".join(stdout_lines[-5:]) if stdout_lines else "Unknown error"
         raise RuntimeError(f"Model download failed: {err}")
 
-    logger.info("Model download complete (~20 min on this connection). Ready to process payslips.")
+    logger.info("Model download complete. Ready to process payslips.")
 
 
 def _strip_fences(raw: str) -> str:
