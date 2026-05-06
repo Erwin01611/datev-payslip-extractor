@@ -1,7 +1,6 @@
 #!/bin/bash
 # Double-click to start the Payslip Processor (Tkinter desktop app).
-# Activates the existing virtual environment and launches the GUI.
+# Uses the bundled Python environment directly (no activation needed).
 
 cd "$(dirname "$0")"
-source .venv/bin/activate
-python tkinter_app.py
+.venv/bin/python tkinter_app.py
