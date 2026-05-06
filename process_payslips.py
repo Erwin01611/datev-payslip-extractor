@@ -593,6 +593,10 @@ def main():
 
     logger.info("Found %d PDF(s) to process", len(pdf_files))
 
+    # Pre-download vision model on first run (so each crop gets normal timeout)
+    from glm_ocr_tester.vision_client import ensure_model_downloaded
+    ensure_model_downloaded()
+
     # Process all PDFs, all pages
     all_payslips: List[dict] = []
     for pdf_path in pdf_files:

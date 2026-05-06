@@ -9,6 +9,7 @@ Hardware: Apple Silicon M-series (tested on M1 Pro 16GB)
 
 import json
 import logging
+import os
 import re
 import subprocess
 import sys
@@ -18,9 +19,56 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 DEFAULT_MODEL = "mlx-community/Qwen3.5-9B-MLX-4bit"
+
+
 DEFAULT_MAX_TOKENS = 800
 DEFAULT_TEMPERATURE = 0.1
-DEFAULT_TIMEOUT = 600  # seconds — model load + generation (cold start can take 3-4 min)
+DEFAULT_TIMEOUT = 600  # seconds — per-crop inference only (download handled separately)
+
+
+def _model_is_cached(model_name: str) -> bool:
+    """Check if the HuggingFace model is already downloaded locally."""
+    cache_dir = Path.home() / ".cache" / "huggingface" / "hub"
+    model_cache = cache_dir / f"models--{model_name.replace('/', '--')}"
+    return model_cache.exists() and any(model_cache.iterdir())
+
+
+def ensure_model_downloaded(model: str = DEFAULT_MODEL, timeout: int = 3600) -> None:
+    """Download the model if not cached. Blocks until complete.
+
+    Uses a 1x1 dummy image to trigger the download via mlx_vlm without
+    doing meaningful inference. This separates the download step from
+    actual vision extraction so timeouts don't overlap.
+    """
+    if _model_is_cached(model):
+        logger.info("Model already cached locally.")
+        return
+
+    logger.info(
+        "Model not cached. Starting download of ~9 GB from HuggingFace. "
+        "This takes 10–25 minutes on first run depending on your connection. Please wait..."
+    )
+
+    # Create a minimal 1x1 PNG to satisfy mlx_vlm's --image requirement
+    dummy_image = Path(__file__).parent / "_dummy_1x1.png"
+    if not dummy_image.exists():
+        from PIL import Image
+        Image.new("RGB", (1, 1), color="white").save(dummy_image)
+
+    cmd = [
+        sys.executable, "-m", "mlx_vlm", "generate",
+        "--model", model,
+        "--max-tokens", "1",
+        "--prompt", "hi",
+        "--image", str(dummy_image),
+    ]
+
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    if result.returncode != 0:
+        err = result.stderr.strip() or "Unknown error"
+        raise RuntimeError(f"Model download failed: {err}")
+
+    logger.info("Model download complete (~20 min on this connection). Ready to process payslips.")
 
 
 def _strip_fences(raw: str) -> str:

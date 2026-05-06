@@ -59,7 +59,7 @@ source .venv/bin/activate
 python tkinter_app.py
 ```
 
-> **First run only:** The app downloads a ~9 GB AI model from HuggingFace. This takes 5–10 minutes. The status bar may appear frozen during the first PDF page — this is normal. Subsequent runs are fast.
+> **First run only:** The app downloads a ~9 GB AI model from HuggingFace. This takes 10–25 minutes depending on your connection. The status bar will show "Downloading AI model..." during this time. Subsequent runs are fast.
 
 ### Command line
 

@@ -255,6 +255,12 @@ class PayslipApp:
     def _run_pipeline(self, pdf_paths: list[Path], crops_dir: Path) -> None:
         """Background thread: runs the pipeline and pushes messages to queue."""
         try:
+            # Pre-download model on first run so each crop gets a normal timeout
+            from glm_ocr_tester.vision_client import ensure_model_downloaded
+            self.msg_queue.put(("status", "Checking AI model..."))
+            ensure_model_downloaded()
+            self.msg_queue.put(("status", "Model ready. Starting processing..."))
+
             all_payslips: list[dict] = []
             total_pdfs = len(pdf_paths)
 
